@@ -1,150 +1,101 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>학교 Q&A 플랫폼</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 0;
-}
-.header {
-  background: #2c3e50;
-  color: white;
-  padding: 15px;
-  text-align: center;
-  font-size: 22px;
-}
-.container {
-  padding: 15px;
-}
-
+body { font-family: Arial; background: #f4f6f8; margin: 0; padding: 0; }
+.header { background: #2c3e50; color: white; padding: 15px; text-align:center; font-size:22px; }
+.container { padding: 15px; }
 input, textarea, select, button {
-  width: 100%;
-  margin-top: 8px;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 5px;
+  width:100%; margin-top:8px; padding:10px; font-size:16px; border-radius:5px;
 }
+button { background:#2c3e50; color:white; border:none; cursor:pointer;}
+button:hover { background:#1f2a38;}
 
-button {
-  background: #2c3e50;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-button:hover {
-  background: #1f2a38;
-}
-
-.question-card {
-  background: white;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-.answer {
-  background: #fff;
-  padding: 8px;
-  border-radius: 6px;
-  margin-top: 6px;
-}
-.report {
-  background: #fff3cd;
-  padding: 8px;
-  border-radius: 6px;
-  margin-top: 6px;
-}
+.question-card { background:white; padding:12px; border-radius:8px; margin-top:10px;}
+.answer { background:#fff; padding:8px; border-radius:6px; margin-top:6px;}
+.report { background:#fff3cd; padding:8px; border-radius:6px; margin-top:6px;}
 </style>
-
 </head>
 <body>
 
 <div class="header">학교 Q&A 플랫폼</div>
 
-<div class="container" id="main">
+<div class="container">
 
-  <!-- 닉네임 입력 -->
-  <div id="nicknameForm">
-    <h3>닉네임 입력</h3>
-    <input type="text" id="nickname" placeholder="사용할 닉네임 입력">
-    <button onclick="setNickname()">확인</button>
-  </div>
+<div id="nicknameForm">
+  <h3>닉네임 입력</h3>
+  <input type="text" id="nickname" placeholder="사용할 닉네임 입력">
+  <button onclick="setNickname()">확인</button>
+</div>
 
-  <!-- 관리자 로그인 -->
-  <div id="adminForm" style="margin-top: 10px;">
-    <h3>관리자 로그인</h3>
-    <input type="password" id="adminKey" placeholder="관리자 키">
-    <button onclick="adminLogin()">관리자 모드 진입</button>
-  </div>
+<div id="adminForm" style="margin-top:10px;">
+  <h3>관리자 로그인</h3>
+  <input type="password" id="adminKey" placeholder="관리자 키">
+  <button onclick="adminLogin()">관리자 모드 진입</button>
+</div>
 
-  <!-- 질문 목록 -->
-  <div id="listView" style="display:none;">
-    <h3>질문 목록</h3>
+<div id="listView" style="display:none;">
+  <h3>질문 목록</h3>
+  과목 필터:
+  <select id="subjectFilter" onchange="loadQuestions()">
+    <option value="">전체</option>
+    <option value="수학">수학</option>
+    <option value="영어">영어</option>
+    <option value="과학">과학</option>
+    <option value="기타">기타</option>
+  </select>
 
-    과목 필터:
-    <select id="subjectFilter" onchange="loadQuestions()">
-      <option value="">전체</option>
-      <option value="수학">수학</option>
-      <option value="영어">영어</option>
-      <option value="과학">과학</option>
-      <option value="기타">기타</option>
-    </select>
+  <div id="questions"></div>
 
-    <div id="questions"></div>
+  <hr>
+  <h4>새 질문 작성</h4>
+  <input type="text" id="newQuestionText" placeholder="질문을 입력하세요">
+  <select id="newSubject">
+    <option value="수학">수학</option>
+    <option value="영어">영어</option>
+    <option value="과학">과학</option>
+    <option value="기타">기타</option>
+  </select>
+  <button onclick="addQuestion()">질문 등록</button>
+</div>
 
-    <hr>
-    <h4>새 질문 작성</h4>
-    내용:
-    <input type="text" id="newQuestionText" placeholder="질문을 입력하세요">
-    과목:
-    <select id="newSubject">
-      <option value="수학">수학</option>
-      <option value="영어">영어</option>
-      <option value="과학">과학</option>
-      <option value="기타">기타</option>
-    </select>
-    <button onclick="addQuestion()">질문 등록</button>
-  </div>
+<div id="detailView" style="display:none;">
+  <button onclick="goBack()">⬅️ 뒤로</button>
+  <h3 id="detailSubject"></h3>
+  <p id="detailText"></p>
+  <p><strong>작성자:</strong> <span id="detailNickname"></span></p>
 
-  <!-- 질문 상세 -->
-  <div id="detailView" style="display:none;">
-    <button onclick="goBack()">⬅️ 뒤로</button>
-    <h3 id="detailSubject"></h3>
-    <p id="detailText"></p>
-    <p><strong>작성자:</strong> <span id="detailNickname"></span></p>
+  <h4>🗨 답변들</h4>
+  <div id="answers"></div>
 
-    <h4>🗨 답변들</h4>
-    <div id="answers"></div>
+  <h4>답변 작성</h4>
+  <textarea id="newAnswerText" rows="3" placeholder="답변 입력"></textarea>
+  <button onclick="addAnswer()">답변 전송</button>
 
-    <h4>답변 작성</h4>
-    <textarea id="newAnswerText" rows="3" placeholder="답변 입력"></textarea>
-    <button onclick="addAnswer()">답변 전송</button>
+  <h4 style="margin-top:20px;">📛 신고하기</h4>
+  <input type="text" id="reportReason" placeholder="신고 사유 입력">
+  <button onclick="reportItem()">신고하기</button>
+  <div id="reportThanks"></div>
+</div>
 
-    <h4 style="margin-top: 20px;">📛 신고하기</h4>
-    신고 이유:
-    <input type="text" id="reportReason" placeholder="신고 사유 입력">
-    <button onclick="reportItem()">신고하기</button>
-    <div id="reportThanks"></div>
-  </div>
-
-  <!-- 관리자 신고 관리 -->
-  <div id="adminView" style="display:none; margin-top:20px;">
-    <h3>📌 신고된 내용</h3>
-    <div id="reportsList"></div>
-    <button onclick="hideAdmin()">관리자 나가기</button>
-  </div>
+<div id="adminView" style="display:none; margin-top:20px;">
+  <h3>📌 신고된 내용</h3>
+  <div id="reportsList"></div>
+  <button onclick="hideAdmin()">관리자 나가기</button>
+</div>
 
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyC9y33YK_3b5NMfAk6dZi2jDMIi_dDXklQ",
   authDomain: "site4school-6affe.firebaseapp.com",
@@ -155,162 +106,125 @@ const firebaseConfig = {
   measurementId: "G-PLB6VXX955"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let currentNickname = "";
 let currentQuestionId = "";
 let isAdmin = false;
-
-// 관리자 키 설정 (원하면 바꿀 수 있음)
 const ADMIN_KEY = "AdminSecret2026!";
 
 function setNickname() {
   const nick = document.getElementById("nickname").value.trim();
-  if (!nick) return alert("닉네임을 입력해주세요!");
+  if (!nick) return alert("닉네임 입력해!");
   currentNickname = nick;
-  document.getElementById("nicknameForm").style.display = "none";
-  document.getElementById("listView").style.display = "block";
+  document.getElementById("nicknameForm").style.display="none";
+  document.getElementById("listView").style.display="block";
   loadQuestions();
 }
 
 function adminLogin() {
   const key = document.getElementById("adminKey").value.trim();
-  if (key === ADMIN_KEY) {
-    isAdmin = true;
-    alert("관리자 모드 진입!");
-    document.getElementById("adminView").style.display = "block";
+  if (key===ADMIN_KEY) {
+    isAdmin=true;
+    alert("관리자 모드!");
+    document.getElementById("adminView").style.display="block";
     loadReports();
-  } else {
-    alert("관리자 키가 틀렸습니다.");
-  }
+  } else alert("키 틀림!");
 }
 
 async function addQuestion() {
   const text = document.getElementById("newQuestionText").value.trim();
   const subject = document.getElementById("newSubject").value;
   if (!text) return;
-  await addDoc(collection(db, "questions"), {
+  await db.collection("questions").add({
     nickname: currentNickname,
-    text,
-    subject,
-    createdAt: Date.now()
+    text, subject, createdAt: Date.now()
   });
-  document.getElementById("newQuestionText").value = "";
+  document.getElementById("newQuestionText").value="";
   loadQuestions();
 }
 
 async function loadQuestions() {
   const sel = document.getElementById("subjectFilter").value;
-  let qRef = collection(db, "questions");
-  if (sel) qRef = query(qRef, where("subject", "==", sel));
-  const snap = await getDocs(qRef);
-
+  let qCol = db.collection("questions");
+  if (sel) qCol = qCol.where("subject","==",sel);
+  const snapshot = await qCol.get();
   const cont = document.getElementById("questions");
-  cont.innerHTML = "";
-  snap.forEach(d => {
-    const q = d.data();
+  cont.innerHTML="";
+  snapshot.forEach(doc => {
+    const q = doc.data();
     const div = document.createElement("div");
-    div.className = "question-card";
-    let html = `
-      <strong>${q.subject}</strong> — ${q.text}
-      <br><small>작성자: ${q.nickname}</small>
-    `;
-    if (isAdmin) {
-      html += `<br><button onclick="deleteQuestion('${d.id}')">❌ 질문 삭제</button>`;
-    }
-    div.innerHTML = html;
-    div.onclick = () => showDetail(d.id, q);
+    div.className="question-card";
+    let html = `<strong>${q.subject}</strong> — ${q.text}<br><small>${q.nickname}</small>`;
+    if (isAdmin) html+= `<br><button onclick="deleteQuestion('${doc.id}')">❌ 질문 삭제</button>`;
+    div.innerHTML=html;
+    div.onclick = ()=> showDetail(doc.id,q);
     cont.appendChild(div);
   });
 }
 
 function goBack() {
-  document.getElementById("detailView").style.display = "none";
-  document.getElementById("listView").style.display = "block";
+  document.getElementById("detailView").style.display="none";
+  document.getElementById("listView").style.display="block";
 }
 
-function showDetail(id, data) {
-  currentQuestionId = id;
-  document.getElementById("listView").style.display = "none";
-  document.getElementById("detailView").style.display = "block";
-  document.getElementById("detailSubject").innerText = data.subject;
-  document.getElementById("detailText").innerText = data.text;
-  document.getElementById("detailNickname").innerText = data.nickname;
+function showDetail(id,data) {
+  currentQuestionId=id;
+  document.getElementById("listView").style.display="none";
+  document.getElementById("detailView").style.display="block";
+  document.getElementById("detailSubject").innerText=data.subject;
+  document.getElementById("detailText").innerText=data.text;
+  document.getElementById("detailNickname").innerText=data.nickname;
   loadAnswers();
 }
 
 async function addAnswer() {
-  const text = document.getElementById("newAnswerText").value.trim();
+  const text=document.getElementById("newAnswerText").value.trim();
   if (!text) return;
-  await addDoc(collection(db, "questions", currentQuestionId, "answers"), {
-    nickname: currentNickname,
-    text,
-    createdAt: Date.now()
+  await db.collection("questions").doc(currentQuestionId).collection("answers").add({
+    nickname: currentNickname, text, createdAt:Date.now()
   });
-  document.getElementById("newAnswerText").value = "";
+  document.getElementById("newAnswerText").value="";
   loadAnswers();
 }
 
 async function loadAnswers() {
-  const ansDiv = document.getElementById("answers");
-  ansDiv.innerHTML = "";
-  const snap = await getDocs(collection(db, "questions", currentQuestionId, "answers"));
-  snap.forEach(d => {
-    const a = d.data();
-    const div = document.createElement("div");
-    div.className = "answer";
-    let html = `<strong>${a.nickname}:</strong> ${a.text}`;
-    if (isAdmin) {
-      html += ` <button onclick="deleteAnswer('${currentQuestionId}','${d.id}')">❌</button>`;
-    }
-    div.innerHTML = html;
-    ansDiv.appendChild(div);
+  const ansDiv=document.getElementById("answers");
+  ansDiv.innerHTML="";
+  const snap=await db.collection("questions").doc(currentQuestionId).collection("answers").get();
+  snap.forEach(doc=>{
+    const a=doc.data();
+    const div=document.createElement("div");
+    div.className="answer";
+    let html=`<strong>${a.nickname}:</strong> ${a.text}`;
+    if(isAdmin) html+= ` <button onclick="deleteAnswer('${currentQuestionId}','${doc.id}')">❌</button>`;
+    div.innerHTML=html; ansDiv.appendChild(div);
   });
 }
 
 async function reportItem() {
-  const reason = document.getElementById("reportReason").value.trim();
-  if (!reason) return alert("신고 사유를 입력!");
-  await addDoc(collection(db, "reports"), {
-    targetId: currentQuestionId,
-    reason,
-    createdAt: Date.now()
-  });
-  document.getElementById("reportThanks").innerText = "📩 신고됨!";
-  document.getElementById("reportReason").value = "";
+  const reason=document.getElementById("reportReason").value.trim();
+  if (!reason) return alert("신고 사유 입력!");
+  await db.collection("reports").add({targetId:currentQuestionId, reason, createdAt:Date.now()});
+  document.getElementById("reportThanks").innerText="📩 신고됨!";
 }
 
 async function loadReports() {
-  const snap = await getDocs(collection(db, "reports"));
-  const list = document.getElementById("reportsList");
-  list.innerHTML = "";
-  snap.forEach(d => {
-    const r = d.data();
-    const div = document.createElement("div");
-    div.className = "report";
-    div.innerHTML = `
-      ❗ 질문 ID: ${r.targetId}<br>
-      신고 이유: ${r.reason}<br>
-      <button onclick="deleteReport('${d.id}')">✔ 처리</button>
-    `;
+  const list=document.getElementById("reportsList");
+  list.innerHTML="";
+  const snap=await db.collection("reports").get();
+  snap.forEach(doc=>{
+    const r=doc.data();
+    const div=document.createElement("div");
+    div.className="report";
+    div.innerHTML=`❗ 질문 ID: ${r.targetId}<br>사유: ${r.reason}<br>
+    <button onclick="deleteReport('${doc.id}')">✔ 처리</button>`;
     list.appendChild(div);
   });
 }
 
-async function deleteQuestion(id) {
-  await deleteDoc(doc(db, "questions", id));
-  loadQuestions();
-}
-async function deleteAnswer(qId, aId) {
-  await deleteDoc(doc(db, "questions", qId, "answers", aId));
-  loadAnswers();
-}
-async function deleteReport(id) {
-  await deleteDoc(doc(db, "reports", id));
-  loadReports();
-}
+async function deleteQuestion(id) { await db.collection("questions").doc(id).delete(); loadQuestions(); }
+async function deleteAnswer(qId,aId) { await db.collection("questions").doc(qId).collection("answers").doc(aId).delete(); loadAnswers(); }
+async function deleteReport(id) { await db.collection("reports").doc(id).delete(); loadReports(); }
 </script>
-
-</body>
-</html>
