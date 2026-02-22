@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SBH Q&A 플랫폼</title>
+<title>학교 Q&A 플랫폼</title>
 
 <style>
 body {
@@ -22,6 +22,7 @@ body {
 .container {
   padding: 15px;
 }
+
 input, textarea, select, button {
   width: 100%;
   margin-top: 8px;
@@ -29,6 +30,7 @@ input, textarea, select, button {
   font-size: 16px;
   border-radius: 5px;
 }
+
 button {
   background: #2c3e50;
   color: white;
@@ -38,6 +40,7 @@ button {
 button:hover {
   background: #1f2a38;
 }
+
 .question-card {
   background: white;
   padding: 12px;
@@ -73,7 +76,7 @@ button:hover {
   </div>
 
   <!-- 관리자 로그인 -->
-  <div id="adminForm" style="margin-top: 20px;">
+  <div id="adminForm" style="margin-top: 10px;">
     <h3>관리자 로그인</h3>
     <input type="password" id="adminKey" placeholder="관리자 키">
     <button onclick="adminLogin()">관리자 모드 진입</button>
@@ -82,6 +85,7 @@ button:hover {
   <!-- 질문 목록 -->
   <div id="listView" style="display:none;">
     <h3>질문 목록</h3>
+
     과목 필터:
     <select id="subjectFilter" onchange="loadQuestions()">
       <option value="">전체</option>
@@ -95,9 +99,9 @@ button:hover {
 
     <hr>
     <h4>새 질문 작성</h4>
-    제목:
-    <input type="text" id="newQuestionText" placeholder="질문 내용">
-    과목 선택:
+    내용:
+    <input type="text" id="newQuestionText" placeholder="질문을 입력하세요">
+    과목:
     <select id="newSubject">
       <option value="수학">수학</option>
       <option value="영어">영어</option>
@@ -122,16 +126,15 @@ button:hover {
     <button onclick="addAnswer()">답변 전송</button>
 
     <h4 style="margin-top: 20px;">📛 신고하기</h4>
-    신고 사유:
-    <input type="text" id="reportReason" placeholder="신고 이유 입력">
+    신고 이유:
+    <input type="text" id="reportReason" placeholder="신고 사유 입력">
     <button onclick="reportItem()">신고하기</button>
-
     <div id="reportThanks"></div>
   </div>
 
   <!-- 관리자 신고 관리 -->
   <div id="adminView" style="display:none; margin-top:20px;">
-    <h3>📌 신고된 내용 목록</h3>
+    <h3>📌 신고된 내용</h3>
     <div id="reportsList"></div>
     <button onclick="hideAdmin()">관리자 나가기</button>
   </div>
@@ -159,12 +162,12 @@ let currentNickname = "";
 let currentQuestionId = "";
 let isAdmin = false;
 
-// 관리자 비밀번호 (원하면 바꿔도 됨)
+// 관리자 키 설정 (원하면 바꿀 수 있음)
 const ADMIN_KEY = "AdminSecret2026!";
 
 function setNickname() {
   const nick = document.getElementById("nickname").value.trim();
-  if (!nick) return alert("닉네임 입력해!");
+  if (!nick) return alert("닉네임을 입력해주세요!");
   currentNickname = nick;
   document.getElementById("nicknameForm").style.display = "none";
   document.getElementById("listView").style.display = "block";
@@ -179,11 +182,10 @@ function adminLogin() {
     document.getElementById("adminView").style.display = "block";
     loadReports();
   } else {
-    alert("관리자 키가 틀렸어요.");
+    alert("관리자 키가 틀렸습니다.");
   }
 }
 
-// 질문 등록
 async function addQuestion() {
   const text = document.getElementById("newQuestionText").value.trim();
   const subject = document.getElementById("newSubject").value;
@@ -198,7 +200,6 @@ async function addQuestion() {
   loadQuestions();
 }
 
-// 질문 불러오기
 async function loadQuestions() {
   const sel = document.getElementById("subjectFilter").value;
   let qRef = collection(db, "questions");
@@ -229,7 +230,6 @@ function goBack() {
   document.getElementById("listView").style.display = "block";
 }
 
-// 질문 상세 열기
 function showDetail(id, data) {
   currentQuestionId = id;
   document.getElementById("listView").style.display = "none";
@@ -240,7 +240,6 @@ function showDetail(id, data) {
   loadAnswers();
 }
 
-// 답변 저장
 async function addAnswer() {
   const text = document.getElementById("newAnswerText").value.trim();
   if (!text) return;
@@ -253,7 +252,6 @@ async function addAnswer() {
   loadAnswers();
 }
 
-// 답변 불러오기
 async function loadAnswers() {
   const ansDiv = document.getElementById("answers");
   ansDiv.innerHTML = "";
@@ -271,20 +269,18 @@ async function loadAnswers() {
   });
 }
 
-// 신고하기
 async function reportItem() {
   const reason = document.getElementById("reportReason").value.trim();
-  if (!reason) return alert("신고 사유 입력!");
+  if (!reason) return alert("신고 사유를 입력!");
   await addDoc(collection(db, "reports"), {
     targetId: currentQuestionId,
     reason,
     createdAt: Date.now()
   });
-  document.getElementById("reportThanks").innerText = "📩 신고 접수됐어요!";
+  document.getElementById("reportThanks").innerText = "📩 신고됨!";
   document.getElementById("reportReason").value = "";
 }
 
-// 신고 목록 불러오기 (관리자)
 async function loadReports() {
   const snap = await getDocs(collection(db, "reports"));
   const list = document.getElementById("reportsList");
@@ -295,14 +291,13 @@ async function loadReports() {
     div.className = "report";
     div.innerHTML = `
       ❗ 질문 ID: ${r.targetId}<br>
-      이유: ${r.reason}<br>
-      <button onclick="deleteReport('${d.id}')">✔ 처리 완료</button>
+      신고 이유: ${r.reason}<br>
+      <button onclick="deleteReport('${d.id}')">✔ 처리</button>
     `;
     list.appendChild(div);
   });
 }
 
-// 삭제 기능
 async function deleteQuestion(id) {
   await deleteDoc(doc(db, "questions", id));
   loadQuestions();
