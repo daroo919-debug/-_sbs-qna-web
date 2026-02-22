@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>학교 Q&A 플랫폼</title>
+<title>SBH Q&A 플랫폼</title>
 
 <style>
 body {
@@ -35,6 +35,9 @@ button {
   border: none;
   cursor: pointer;
 }
+button:hover {
+  background: #1f2a38;
+}
 .question-card {
   background: white;
   padding: 12px;
@@ -47,7 +50,14 @@ button {
   border-radius: 6px;
   margin-top: 6px;
 }
+.report {
+  background: #fff3cd;
+  padding: 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+}
 </style>
+
 </head>
 <body>
 
@@ -62,20 +72,31 @@ button {
     <button onclick="setNickname()">확인</button>
   </div>
 
+  <!-- 관리자 로그인 -->
+  <div id="adminForm" style="margin-top: 20px;">
+    <h3>관리자 로그인</h3>
+    <input type="password" id="adminKey" placeholder="관리자 키">
+    <button onclick="adminLogin()">관리자 모드 진입</button>
+  </div>
+
   <!-- 질문 목록 -->
   <div id="listView" style="display:none;">
     <h3>질문 목록</h3>
-    <select id="subjectFilter">
+    과목 필터:
+    <select id="subjectFilter" onchange="loadQuestions()">
       <option value="">전체</option>
       <option value="수학">수학</option>
       <option value="영어">영어</option>
       <option value="과학">과학</option>
       <option value="기타">기타</option>
     </select>
+
     <div id="questions"></div>
+
     <hr>
-    질문 제목:
-    <input type="text" id="newQuestionText">
+    <h4>새 질문 작성</h4>
+    제목:
+    <input type="text" id="newQuestionText" placeholder="질문 내용">
     과목 선택:
     <select id="newSubject">
       <option value="수학">수학</option>
@@ -96,16 +117,30 @@ button {
     <h4>🗨 답변들</h4>
     <div id="answers"></div>
 
-    답변 입력:
-    <textarea id="newAnswerText" rows="3"></textarea>
+    <h4>답변 작성</h4>
+    <textarea id="newAnswerText" rows="3" placeholder="답변 입력"></textarea>
     <button onclick="addAnswer()">답변 전송</button>
+
+    <h4 style="margin-top: 20px;">📛 신고하기</h4>
+    신고 사유:
+    <input type="text" id="reportReason" placeholder="신고 이유 입력">
+    <button onclick="reportItem()">신고하기</button>
+
+    <div id="reportThanks"></div>
+  </div>
+
+  <!-- 관리자 신고 관리 -->
+  <div id="adminView" style="display:none; margin-top:20px;">
+    <h3>📌 신고된 내용 목록</h3>
+    <div id="reportsList"></div>
+    <button onclick="hideAdmin()">관리자 나가기</button>
   </div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC9y33YK_3b5NMfAk6dZi2jDMIi_dDXklQ",
@@ -116,69 +151,77 @@ const firebaseConfig = {
   appId: "1:527337035288:web:290da151584a31eb90d56d",
   measurementId: "G-PLB6VXX955"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let currentNickname = "";
 let currentQuestionId = "";
+let isAdmin = false;
+
+// 관리자 비밀번호 (원하면 바꿔도 됨)
+const ADMIN_KEY = "AdminSecret2026!";
 
 function setNickname() {
   const nick = document.getElementById("nickname").value.trim();
-  if (!nick) {
-    alert("닉네임을 입력해주세요.");
-    return;
-  }
+  if (!nick) return alert("닉네임 입력해!");
   currentNickname = nick;
   document.getElementById("nicknameForm").style.display = "none";
   document.getElementById("listView").style.display = "block";
   loadQuestions();
 }
 
+function adminLogin() {
+  const key = document.getElementById("adminKey").value.trim();
+  if (key === ADMIN_KEY) {
+    isAdmin = true;
+    alert("관리자 모드 진입!");
+    document.getElementById("adminView").style.display = "block";
+    loadReports();
+  } else {
+    alert("관리자 키가 틀렸어요.");
+  }
+}
+
+// 질문 등록
 async function addQuestion() {
   const text = document.getElementById("newQuestionText").value.trim();
   const subject = document.getElementById("newSubject").value;
   if (!text) return;
-
   await addDoc(collection(db, "questions"), {
     nickname: currentNickname,
-    text: text,
-    subject: subject,
+    text,
+    subject,
     createdAt: Date.now()
   });
-
   document.getElementById("newQuestionText").value = "";
   loadQuestions();
 }
 
+// 질문 불러오기
 async function loadQuestions() {
   const sel = document.getElementById("subjectFilter").value;
   let qRef = collection(db, "questions");
   if (sel) qRef = query(qRef, where("subject", "==", sel));
-  const snapshot = await getDocs(qRef);
+  const snap = await getDocs(qRef);
 
-  const container = document.getElementById("questions");
-  container.innerHTML = "";
-  snapshot.forEach(doc => {
-    const data = doc.data();
+  const cont = document.getElementById("questions");
+  cont.innerHTML = "";
+  snap.forEach(d => {
+    const q = d.data();
     const div = document.createElement("div");
     div.className = "question-card";
-    div.innerHTML = `
-      <strong>${data.subject}</strong> — ${data.text}<br>
-      <small>작성자: ${data.nickname}</small>
+    let html = `
+      <strong>${q.subject}</strong> — ${q.text}
+      <br><small>작성자: ${q.nickname}</small>
     `;
-    div.onclick = () => showDetail(doc.id, data);
-    container.appendChild(div);
+    if (isAdmin) {
+      html += `<br><button onclick="deleteQuestion('${d.id}')">❌ 질문 삭제</button>`;
+    }
+    div.innerHTML = html;
+    div.onclick = () => showDetail(d.id, q);
+    cont.appendChild(div);
   });
-}
-
-function showDetail(id, data) {
-  currentQuestionId = id;
-  document.getElementById("listView").style.display = "none";
-  document.getElementById("detailView").style.display = "block";
-  document.getElementById("detailSubject").innerText = `${data.subject}`;
-  document.getElementById("detailText").innerText = `${data.text}`;
-  document.getElementById("detailNickname").innerText = `${data.nickname}`;
-  loadAnswers();
 }
 
 function goBack() {
@@ -186,29 +229,91 @@ function goBack() {
   document.getElementById("listView").style.display = "block";
 }
 
-async function loadAnswers() {
-  const ansDiv = document.getElementById("answers");
-  ansDiv.innerHTML = "";
-  const ansSnapshot = await getDocs(collection(db, "questions", currentQuestionId, "answers"));
-  ansSnapshot.forEach(doc => {
-    const ans = doc.data();
-    const div = document.createElement("div");
-    div.className = "answer";
-    div.innerHTML = `<strong>${ans.nickname}:</strong> ${ans.text}`;
-    ansDiv.appendChild(div);
-  });
+// 질문 상세 열기
+function showDetail(id, data) {
+  currentQuestionId = id;
+  document.getElementById("listView").style.display = "none";
+  document.getElementById("detailView").style.display = "block";
+  document.getElementById("detailSubject").innerText = data.subject;
+  document.getElementById("detailText").innerText = data.text;
+  document.getElementById("detailNickname").innerText = data.nickname;
+  loadAnswers();
 }
 
+// 답변 저장
 async function addAnswer() {
   const text = document.getElementById("newAnswerText").value.trim();
   if (!text) return;
   await addDoc(collection(db, "questions", currentQuestionId, "answers"), {
     nickname: currentNickname,
-    text: text,
+    text,
     createdAt: Date.now()
   });
   document.getElementById("newAnswerText").value = "";
   loadAnswers();
+}
+
+// 답변 불러오기
+async function loadAnswers() {
+  const ansDiv = document.getElementById("answers");
+  ansDiv.innerHTML = "";
+  const snap = await getDocs(collection(db, "questions", currentQuestionId, "answers"));
+  snap.forEach(d => {
+    const a = d.data();
+    const div = document.createElement("div");
+    div.className = "answer";
+    let html = `<strong>${a.nickname}:</strong> ${a.text}`;
+    if (isAdmin) {
+      html += ` <button onclick="deleteAnswer('${currentQuestionId}','${d.id}')">❌</button>`;
+    }
+    div.innerHTML = html;
+    ansDiv.appendChild(div);
+  });
+}
+
+// 신고하기
+async function reportItem() {
+  const reason = document.getElementById("reportReason").value.trim();
+  if (!reason) return alert("신고 사유 입력!");
+  await addDoc(collection(db, "reports"), {
+    targetId: currentQuestionId,
+    reason,
+    createdAt: Date.now()
+  });
+  document.getElementById("reportThanks").innerText = "📩 신고 접수됐어요!";
+  document.getElementById("reportReason").value = "";
+}
+
+// 신고 목록 불러오기 (관리자)
+async function loadReports() {
+  const snap = await getDocs(collection(db, "reports"));
+  const list = document.getElementById("reportsList");
+  list.innerHTML = "";
+  snap.forEach(d => {
+    const r = d.data();
+    const div = document.createElement("div");
+    div.className = "report";
+    div.innerHTML = `
+      ❗ 질문 ID: ${r.targetId}<br>
+      이유: ${r.reason}<br>
+      <button onclick="deleteReport('${d.id}')">✔ 처리 완료</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// 삭제 기능
+async function deleteQuestion(id) {
+  await deleteDoc(doc(db, "questions", id));
+  loadQuestions();
+}
+async function deleteAnswer(qId, aId) {
+  await deleteDoc(doc(db, "questions", qId, "answers", aId));
+  loadAnswers();
+}
+async function deleteReport(id) {
+  await deleteDoc(doc(db, "reports", id));
+  loadReports();
 }
 </script>
 
